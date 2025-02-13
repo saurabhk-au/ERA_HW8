@@ -54,9 +54,11 @@ criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=0.001)
 
 # Training loop
-def train(model, device, train_loader, optimizer, criterion, num_epochs=50):
-    model.train()
+def train(model, device, train_loader, test_loader, optimizer, criterion, num_epochs=50):
     for epoch in range(num_epochs):
+        model.train()
+        correct_train = 0
+        total_train = 0
         running_loss = 0.0
         for images, labels in tqdm(train_loader, desc=f"Epoch {epoch+1}/{num_epochs}"):
             images, labels = images.to(device), labels.to(device)
@@ -71,8 +73,16 @@ def train(model, device, train_loader, optimizer, criterion, num_epochs=50):
             optimizer.step()
 
             running_loss += loss.item()
+            _, predicted = torch.max(outputs.data, 1)
+            total_train += labels.size(0)
+            correct_train += (predicted == labels).sum().item()
 
-        print(f"Epoch [{epoch+1}/{num_epochs}], Loss: {running_loss/len(train_loader):.4f}")
+        train_accuracy = 100 * correct_train / total_train
+        print(f"Epoch [{epoch+1}/{num_epochs}], Loss: {running_loss/len(train_loader):.4f}, Train Accuracy: {train_accuracy:.2f}%")
+
+        # Calculate test accuracy after each epoch
+        test_accuracy = test(model, device, test_loader)
+        print(f"Test Accuracy after Epoch {epoch+1}: {test_accuracy:.2f}%")
 
 # Testing loop
 def test(model, device, test_loader):
@@ -88,9 +98,7 @@ def test(model, device, test_loader):
             correct += (predicted == labels).sum().item()
 
     accuracy = 100 * correct / total
-    print(f'Test Accuracy: {accuracy:.2f}%')
     return accuracy
 
 if __name__ == '__main__':
-    train(model, device, train_loader, optimizer, criterion)
-    test(model, device, test_loader)
+    train(model, device, train_loader, test_loader, optimizer, criterion)

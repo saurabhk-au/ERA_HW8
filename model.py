@@ -16,19 +16,21 @@ class DepthwiseSeparableConv(nn.Module):
 class CIFAR10Model(nn.Module):
     def __init__(self):
         super(CIFAR10Model, self).__init__()
-        self.conv1 = nn.Conv2d(3, 16, kernel_size=3, padding=1)  # Reduced number of filters
-        self.conv2 = DepthwiseSeparableConv(16, 32)  # Reduced number of filters
-        self.conv3 = nn.Conv2d(32, 64, kernel_size=3, padding=2, dilation=2)  # Reduced number of filters
-        self.conv4 = nn.Conv2d(64, 128, kernel_size=3, stride=2, padding=1)  # Reduced number of filters
-        self.gap = nn.AdaptiveAvgPool2d(1)  # Global Average Pooling
-        self.fc = nn.Linear(128, 10)  # Fully connected layer for 10 classes
+        self.conv1 = nn.Conv2d(3, 32, kernel_size=3, padding=1)
+        self.conv2 = DepthwiseSeparableConv(32, 64)
+        self.conv3 = nn.Conv2d(64, 128, kernel_size=3, padding=2, dilation=2)
+        self.conv4 = nn.Conv2d(128, 256, kernel_size=3, stride=2, padding=1)
+        self.gap = nn.AdaptiveAvgPool2d(1)
+        self.fc = nn.Linear(256, 10)
+        self.dropout = nn.Dropout(0.3)
 
     def forward(self, x):
         x = F.relu(self.conv1(x))
         x = F.relu(self.conv2(x))
         x = F.relu(self.conv3(x))
+        x = self.dropout(x)
         x = F.relu(self.conv4(x))
         x = self.gap(x)
-        x = x.view(x.size(0), -1)  # Flatten the tensor
+        x = x.view(x.size(0), -1)
         x = self.fc(x)
         return x

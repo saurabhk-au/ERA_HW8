@@ -60,7 +60,8 @@ def train(model, device, train_loader, test_loader, optimizer, criterion, num_ep
         correct_train = 0
         total_train = 0
         running_loss = 0.0
-        for images, labels in tqdm(train_loader, desc=f"Epoch {epoch+1}/{num_epochs}"):
+        progress_bar = tqdm(train_loader, desc=f"Epoch {epoch+1}/{num_epochs}", mininterval=1)
+        for images, labels in progress_bar:
             images, labels = images.to(device), labels.to(device)
 
             # Forward pass
@@ -77,8 +78,9 @@ def train(model, device, train_loader, test_loader, optimizer, criterion, num_ep
             total_train += labels.size(0)
             correct_train += (predicted == labels).sum().item()
 
-        train_accuracy = 100 * correct_train / total_train
-        print(f"Epoch [{epoch+1}/{num_epochs}], Loss: {running_loss/len(train_loader):.4f}, Train Accuracy: {train_accuracy:.2f}%")
+            # Update progress bar with current training accuracy
+            train_accuracy = 100 * correct_train / total_train
+            progress_bar.set_postfix(loss=running_loss/total_train, accuracy=train_accuracy)
 
         # Calculate test accuracy after each epoch
         test_accuracy = test(model, device, test_loader)

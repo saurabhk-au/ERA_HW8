@@ -2,8 +2,8 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
-from torchvision import datasets
-from model import CIFAR10Model
+from torchvision import datasets, transforms
+from model import CustomNet  # Import the CustomNet model
 from tqdm import tqdm
 from torchsummary import summary
 import albumentations as A
@@ -37,14 +37,14 @@ class Transforms:
 
 # Load CIFAR-10 dataset
 transform_wrapper = Transforms(transform)
-train_dataset = datasets.CIFAR10(root='./data', train=True, transform=transform_wrapper, download=True)
-train_loader = DataLoader(train_dataset, batch_size=128, shuffle=True)
+train_dataset = datasets.CIFAR10(root='./data', train=True, download=True, transform=transform)
+train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True, num_workers=2)
 
 test_dataset = datasets.CIFAR10(root='./data', train=False, transform=transform_wrapper, download=True)
 test_loader = DataLoader(test_dataset, batch_size=128, shuffle=False)
 
 # Initialize the model
-model = CIFAR10Model().to(device)
+model = CustomNet().to(device)
 
 # Print model summary
 summary(model, input_size=(3, 32, 32))
@@ -54,7 +54,7 @@ criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=0.001)
 
 # Training loop
-def train(model, device, train_loader, test_loader, optimizer, criterion, num_epochs=50):
+def train(model, device, train_loader, test_loader, optimizer, criterion, num_epochs=35):
     for epoch in range(num_epochs):
         model.train()
         correct_train = 0

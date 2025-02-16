@@ -57,11 +57,16 @@ model = CustomNet()
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=0.001)
 
+# Print model summary
+summary(model, input_size=(3, 32, 32))
+
 # Training function
-def train(model, train_loader, criterion, optimizer, num_epochs=10):
-    model.train()
+def train(model, train_loader, criterion, optimizer, num_epochs=30):
     for epoch in range(num_epochs):
+        model.train()
         running_loss = 0.0
+        correct = 0
+        total = 0
         for i, (inputs, labels) in enumerate(train_loader):
             optimizer.zero_grad()
             outputs = model(inputs)
@@ -69,9 +74,23 @@ def train(model, train_loader, criterion, optimizer, num_epochs=10):
             loss.backward()
             optimizer.step()
             running_loss += loss.item()
+            
+            # Calculate training accuracy
+            _, predicted = torch.max(outputs.data, 1)
+            total += labels.size(0)
+            correct += (predicted == labels).sum().item()
+            
             if i % 100 == 99:  # Print every 100 mini-batches
                 print(f'Epoch [{epoch + 1}/{num_epochs}], Step [{i + 1}/{len(train_loader)}], Loss: {running_loss / 100:.4f}')
                 running_loss = 0.0
+        
+        train_accuracy = 100 * correct / total
+        print(f'Epoch [{epoch + 1}/{num_epochs}], Training Accuracy: {train_accuracy:.2f}%')
+        
+        # Evaluate on test data
+        test_accuracy = test(model, test_loader)
+        print(f'Epoch [{epoch + 1}/{num_epochs}], Test Accuracy: {test_accuracy:.2f}%')
+
     print('Finished Training')
 
 # Testing function
@@ -85,9 +104,8 @@ def test(model, test_loader):
             _, predicted = torch.max(outputs.data, 1)
             total += labels.size(0)
             correct += (predicted == labels).sum().item()
-    print(f'Accuracy of the network on the 10000 test images: {100 * correct / total:.2f}%')
+    return 100 * correct / total
 
 # Main execution
 if __name__ == '__main__':
     train(model, train_loader, criterion, optimizer)
-    test(model, test_loader)
